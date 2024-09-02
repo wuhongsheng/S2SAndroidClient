@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.io.InputStream
@@ -41,6 +42,8 @@ class MainActivity : ComponentActivity() {
 
     private var isRecording by mutableStateOf(false)
     private var isPlaying by mutableStateOf(false)
+    private var isRecordMute by mutableStateOf(false)
+
 
     private var recorder: AudioRecord? = null
     private var player: AudioTrack? = null
@@ -51,6 +54,7 @@ class MainActivity : ComponentActivity() {
     private var outputStream: OutputStream? = null
     private var inputStream: InputStream? = null
     private val serverIP: String = "192.168.31.210"
+    private var chatMessages by mutableStateOf(listOf<ChatMessage>())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +67,31 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             VoiceSocketApp()
+//            ChatScreen(
+//                messages = chatMessages,
+//                onSendMessage = { message, isVoice ->
+//                    addMessage(ChatMessage(text = message, isUser = true, isVoice = isVoice))
+//                    // 模拟接收响应或使用实际的语音合成/接收逻辑
+//                    if (isVoice) {
+//                        addMessage(ChatMessage(text = "收到语音消息", isUser = false, isVoice = true))
+//                    } else {
+//                        addMessage(ChatMessage(text = "服务器响应: $message", isUser = false))
+//                    }
+//                },
+//                onStartRecording = {
+//                    // 开始录音逻辑
+//                    // 你可以在这里调用 MediaRecorder 或其他录音工具
+//                },
+//                onStopRecording = {
+//                    // 停止录音逻辑
+//                    // 停止录音后可以获取音频文件或数据
+//                }
+//            )
         }
+    }
+
+    private fun addMessage(message: ChatMessage) {
+        chatMessages = chatMessages + message
     }
 
     @Composable
@@ -110,12 +138,18 @@ class MainActivity : ComponentActivity() {
             )
 
             recorder?.startRecording()
+
             val buffer = ByteArray(BUFFER_SIZE)
 
             while (isRecording) {
                 val read = recorder?.read(buffer, 0, buffer.size) ?: 0
                 if (read > 0) {
-                    outputStream?.write(buffer, 0, read)
+                    if (isRecordMute){
+                        val silenceBuffer = ByteArray(BUFFER_SIZE)
+                        outputStream?.write(silenceBuffer)
+                    }else{
+                        outputStream?.write(buffer, 0, read)
+                    }
                 }
             }
         } catch (e: IOException) {
@@ -155,8 +189,12 @@ class MainActivity : ComponentActivity() {
             while (isPlaying) {
                 val read = inputStream?.read(receiveBuffer, 0, receiveBuffer.size) ?: 0
                 if (read > 0) {
+                    isRecordMute = true
                     player?.write(receiveBuffer, 0, read)
+                    delay(50)
+                    isRecordMute = false
                 }
+
             }
         } catch (e: IOException) {
             e.printStackTrace()
