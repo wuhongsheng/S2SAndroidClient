@@ -8,4 +8,9 @@
    ```
    python s2s_pipeline.py --recv_host 0.0.0.0 --send_host 0.0.0.0
    ```
-4. Set the server IP in Android and click the start button
+3. Set the server IP in Android and click the start button
+
+
+
+https://github.com/user-attachments/assets/e94db4a3-ad62-4d38-b14a-920b07edcbe0
+
