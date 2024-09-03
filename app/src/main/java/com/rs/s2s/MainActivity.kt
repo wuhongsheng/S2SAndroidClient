@@ -21,6 +21,7 @@ import android.os.Looper
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
@@ -57,7 +58,7 @@ class MainActivity : ComponentActivity() {
 
     private var outputStream: OutputStream? = null
     private var inputStream: InputStream? = null
-    private val serverIP: String = "192.168.23.177"
+    private var serverIP: String = "192.168.31.210"
     private var chatMessages by mutableStateOf(listOf<ChatMessage>())
 
     @RequiresApi(Build.VERSION_CODES.Q)
@@ -108,9 +109,12 @@ class MainActivity : ComponentActivity() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+
+
             Button(onClick = {
                 isRecording = true
                 isPlaying = true
@@ -128,6 +132,15 @@ class MainActivity : ComponentActivity() {
             }) {
                 Text(text = "Stop Streaming")
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = serverIP,
+                onValueChange = { serverIP = it },
+                label = { Text("Enter Socket Server IP Address") },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 
