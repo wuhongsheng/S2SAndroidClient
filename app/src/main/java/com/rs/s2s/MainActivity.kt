@@ -15,6 +15,10 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.runtime.*
@@ -53,9 +57,10 @@ class MainActivity : ComponentActivity() {
 
     private var outputStream: OutputStream? = null
     private var inputStream: InputStream? = null
-    private val serverIP: String = "192.168.31.210"
+    private val serverIP: String = "192.168.23.177"
     private var chatMessages by mutableStateOf(listOf<ChatMessage>())
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -94,6 +99,7 @@ class MainActivity : ComponentActivity() {
         chatMessages = chatMessages + message
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     @Composable
     fun VoiceSocketApp() {
         val coroutineScope = rememberCoroutineScope()
@@ -156,8 +162,10 @@ class MainActivity : ComponentActivity() {
             e.printStackTrace()
         }
     }
+    val handler = Handler(Looper.getMainLooper())
 
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private suspend fun startReceiving() {
         try {
             // 连接到负责接收数据的Socket
@@ -185,14 +193,21 @@ class MainActivity : ComponentActivity() {
             player?.play()
 
             val receiveBuffer = ByteArray(BUFFER_SIZE)
+            val task = Runnable {
+                println("延时后: ${System.currentTimeMillis()}")
+                isRecordMute = false
+            }
 
             while (isPlaying) {
                 val read = inputStream?.read(receiveBuffer, 0, receiveBuffer.size) ?: 0
                 if (read > 0) {
+                    println("read > 0")
                     isRecordMute = true
                     player?.write(receiveBuffer, 0, read)
-                    delay(50)
-                    isRecordMute = false
+                    if (handler.hasCallbacks(task)){
+                        handler.removeCallbacks(task)
+                    }
+                    handler.postDelayed(task, 150)
                 }
 
             }
