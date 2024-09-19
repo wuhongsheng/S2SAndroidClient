@@ -24,3 +24,36 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+    - name: Get debug file apk path
+      id: debugApk
+      run: echo "apkfile=$(find app/build/outputs/apk/debug/*.apk)" >> $GITHUB_OUTPUT
+
+    - name: Upload Release Build to Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+          name: debug-apk
+          path: ${{ steps.debugApk.outputs.apkfile }}
+    - name: Download APK from build
+      uses: actions/download-artifact@v4
+      with:
+          name: debug-apk
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: ${{ github.ref }}
+    - name: Upload Release APK
+      id: upload_release_asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app-debug.apk
+          asset_name: app-debug.apk
+          asset_content_type: application/zip
