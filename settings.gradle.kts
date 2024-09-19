@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "S2SAndroidClient"
 include(":app")
+include(":deepfilter")

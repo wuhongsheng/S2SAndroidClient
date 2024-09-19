@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">S2SAndroidClient</string>
+    <string name="title_activity_off_line">OffLineActivity</string>
 </resources>
