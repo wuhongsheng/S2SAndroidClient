@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -36,6 +37,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -180,6 +182,24 @@ class MainActivity : ComponentActivity() {
         var serverAddress by remember { mutableStateOf("") }
 
 
+        val launcher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                if (isGranted) {
+                    // 权限已授予
+//                    isRecording = true
+//                    isPlaying = true
+//                    coroutineScope.launch(Dispatchers.IO) { startSending() }
+//                    coroutineScope.launch(Dispatchers.IO) { startReceiving() }
+//
+//                    Log.d(TAG,"stopRecording:{$isRecording}")
+                } else {
+                    // 权限被拒绝
+                    Toast.makeText(context, "需要麦克风权限才能使用录音", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+
         // 读取持久化的服务器地址
         LaunchedEffect(Unit) {
             getServerAddress(context).collect { address ->
@@ -187,28 +207,20 @@ class MainActivity : ComponentActivity() {
                 serverAddress = serverIP
                 Log.d(TAG, "get serverIP:$serverIP")
                 isConnected = connectToServer(serverIP,1234)
+                if (isConnected){
+                    checkAndRequestPermission(context, launcher) {
+                        isRecording = true
+                        isPlaying = true
+                        coroutineScope.launch(Dispatchers.IO) { startSending() }
+                        coroutineScope.launch(Dispatchers.IO) { startReceiving() }
+                    }
+                }
 
             }
         }
 
 
-        val launcher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-            onResult = { isGranted ->
-                if (isGranted) {
-                    // 权限已授予
-                    isRecording = true
-                    isPlaying = true
-                    coroutineScope.launch(Dispatchers.IO) { startSending() }
-                    coroutineScope.launch(Dispatchers.IO) { startReceiving() }
 
-                    Log.d(TAG,"stopRecording:{$isRecording}")
-                } else {
-                    // 权限被拒绝
-                    Toast.makeText(context, "需要麦克风权限才能使用录音", Toast.LENGTH_SHORT).show()
-                }
-            }
-        )
 
         Column(
             modifier = Modifier
@@ -218,20 +230,43 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            IconButton(
-                onClick = {
-                    showSettingDialog = true // 点击图标显示对话框
-                },
-                modifier = Modifier
-                    .align(Alignment.End)
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_settings), // 使用设置图标
-                    tint = Color.Unspecified,
-                    contentDescription = "Settings",
-                    modifier = Modifier.size(48.dp)
-                )
+
+            Column(Modifier.align(Alignment.End)) {
+                IconButton(
+                    onClick = {
+                        showSettingDialog = true // 点击图标显示对话框
+                    },
+                    modifier = Modifier
+                        .align(Alignment.End)
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_settings), // 使用设置图标
+                        tint = Color.Unspecified,
+                        contentDescription = "Settings",
+                        modifier = Modifier.size(48.dp)
+                    )
+
+                }
+
+                IconButton(
+                    onClick = {
+                        // 跳转到目标Activity
+                        val intent = Intent(context, OffLineActivity::class.java)
+                        startActivity(intent)
+                    },
+                    modifier = Modifier
+                        .align(Alignment.End)
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_offline_bolt), // 使用设置图标
+                        tint = Color.Unspecified,
+                        contentDescription = "offline",
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
             }
+
+
 
             if (showSettingDialog) {
                 AlertDialog(
@@ -280,17 +315,17 @@ class MainActivity : ComponentActivity() {
 
             RecordingButton(isConnected = isConnected,isThinking=isThinking, onPress = {
                 Log.d(TAG,"onPress")
-                checkAndRequestPermission(context, launcher) {
-                    isRecording = true
-                    isPlaying = true
-                    coroutineScope.launch(Dispatchers.IO) { startSending() }
-                    coroutineScope.launch(Dispatchers.IO) { startReceiving() }
-                }
+//                checkAndRequestPermission(context, launcher) {
+//                    isRecording = true
+//                    isPlaying = true
+//                    coroutineScope.launch(Dispatchers.IO) { startSending() }
+//                    coroutineScope.launch(Dispatchers.IO) { startReceiving() }
+//                }
             }, onReleased = {
                 Log.d(TAG,"onPress released")
-                coroutineScope.launch(Dispatchers.IO) { stopStreaming() }
-                isRecording = false
-                isPlaying = false
+//                coroutineScope.launch(Dispatchers.IO) { stopStreaming() }
+//                isRecording = false
+//                isPlaying = false
             }
             )
 
@@ -529,17 +564,4 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-//    override fun onRequestPermissionsResult(
-//        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
-//    ) {
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-//
-//        if (requestCode == 200) {
-//            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                // Permission granted
-//            } else {
-//                // Permission denied
-//            }
-//        }
-//    }
 }

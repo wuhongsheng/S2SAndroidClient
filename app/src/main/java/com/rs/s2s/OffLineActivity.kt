@@ -275,7 +275,7 @@ class OffLineActivity : ComponentActivity() {
                 val enhanced_audio_frame = result!!.getValue("enhanced_audio_frame") as OnnxTensor
 //                val endTime = System.currentTimeMillis()
 
-                processedOutputStream.write(onnxTensorToByteArray(enhanced_audio_frame))
+                processedOutputStream.write(onnxTensorToByteArray(enhanced_audio_frame),0,960)
 //                val inferenceTime = (endTime - startTime) / 1000.0 // 以秒为单位
 //                Log.d(TAG, "total Time: $inferenceTime seconds")
 //                val inferenceTime2 = (endTime1 - startTime) / 1000.0 // 以秒为单位
