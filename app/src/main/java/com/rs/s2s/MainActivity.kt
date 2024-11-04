@@ -17,6 +17,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
+import android.media.audiofx.AcousticEchoCanceler
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -52,6 +53,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.webrtc.audioprocessing.WebrtcAPMActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -91,6 +93,11 @@ class MainActivity : ComponentActivity() {
 
     val SERVER_ADDRESS_KEY = stringPreferencesKey("server_address")
 
+//    private lateinit var onlineRecognizer: OnlineRecognizer
+//    private lateinit var offlineRecognizer: OfflineRecognizer
+    private var samplesBuffer = arrayListOf<FloatArray>()
+
+
 
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,36 +108,16 @@ class MainActivity : ComponentActivity() {
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 200)
         }
-
-//        DeepFilterUtil.test(this)
-//        DeepFilterUtil.initialize(this)
-
-
-
+//        Log.i(TAG, "Start to initialize first-pass recognizer")
+//        initOnlineRecognizer()
+//        Log.i(TAG, "Finished initializing first-pass recognizer")
+//
+//        Log.i(TAG, "Start to initialize second-pass recognizer")
+//        initOfflineRecognizer()
+//        Log.i(TAG, "Finished initializing second-pass recognizer")
 
         setContent {
-
             VoiceSocketApp()
-//            ChatScreen(
-//                messages = chatMessages,
-//                onSendMessage = { message, isVoice ->
-//                    addMessage(ChatMessage(text = message, isUser = true, isVoice = isVoice))
-//                    // 模拟接收响应或使用实际的语音合成/接收逻辑
-//                    if (isVoice) {
-//                        addMessage(ChatMessage(text = "收到语音消息", isUser = false, isVoice = true))
-//                    } else {
-//                        addMessage(ChatMessage(text = "服务器响应: $message", isUser = false))
-//                    }
-//                },
-//                onStartRecording = {
-//                    // 开始录音逻辑
-//                    // 你可以在这里调用 MediaRecorder 或其他录音工具
-//                },
-//                onStopRecording = {
-//                    // 停止录音逻辑
-//                    // 停止录音后可以获取音频文件或数据
-//                }
-//            )
         }
     }
 
@@ -214,6 +201,10 @@ class MainActivity : ComponentActivity() {
                         coroutineScope.launch(Dispatchers.IO) { startSending() }
                         coroutineScope.launch(Dispatchers.IO) { startReceiving() }
                     }
+                }else {
+                    coroutineScope.launch(Dispatchers.IO) { stopStreaming() }
+                    isRecording = false
+                    isPlaying = false
                 }
 
             }
@@ -248,10 +239,28 @@ class MainActivity : ComponentActivity() {
 
                 }
 
+//                IconButton(
+//                    onClick = {
+//                        // 跳转到目标Activity
+//                        val intent = Intent(context, OffLineActivity::class.java)
+////                        val intent = Intent(context, WebrtcAPMActivity::class.java)
+//                        startActivity(intent)
+//                    },
+//                    modifier = Modifier
+//                        .align(Alignment.End)
+//                ) {
+//                    Icon(
+//                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_offline_bolt), // 使用设置图标
+//                        tint = Color.Unspecified,
+//                        contentDescription = "offline",
+//                        modifier = Modifier.size(48.dp)
+//                    )
+//                }
+
                 IconButton(
                     onClick = {
                         // 跳转到目标Activity
-                        val intent = Intent(context, OffLineActivity::class.java)
+                        val intent = Intent(context, WebrtcAPMActivity::class.java)
                         startActivity(intent)
                     },
                     modifier = Modifier
@@ -330,33 +339,6 @@ class MainActivity : ComponentActivity() {
             )
 
 
-//            Button(onClick = {
-//                isRecording = true
-//                isPlaying = true
-////                coroutineScope.launch(Dispatchers.IO) { startStreaming() }
-//                coroutineScope.launch(Dispatchers.IO) { startSending() }
-//                coroutineScope.launch(Dispatchers.IO) { startReceiving() }
-//            }) {
-//                Text(text = "Start Streaming")
-//            }
-
-//            Spacer(modifier = Modifier.height(16.dp))
-//
-//            Button(onClick = {
-//                stopStreaming()
-//            }) {
-//                Text(text = "Stop Streaming")
-//            }
-
-//            Spacer(modifier = Modifier.height(16.dp))
-//
-//            OutlinedTextField(
-//                value = serverIP,
-//                onValueChange = { serverIP = it },
-//                label = { Text("Enter Socket Server IP Address") },
-//                placeholder = { Text("Enter Socket Server IP Address") },
-//
-//            )
         }
     }
 
@@ -365,11 +347,27 @@ class MainActivity : ComponentActivity() {
         try {
             // 连接到负责发送数据的Socket
             outputStream = sendSocket?.getOutputStream()
+//            val stream = onlineRecognizer.createStream()
 
-            recorder = AudioRecord(
-                MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, BUFFER_SIZE
-            )
+
+            val minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
+
+
+            val audioFormat = AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setSampleRate(SAMPLE_RATE)
+                .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                .build()
+
+            recorder = AudioRecord.Builder()
+                .setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
+                .setAudioFormat(audioFormat)
+                .setBufferSizeInBytes(minBufferSize)
+                .build().apply {
+                    AcousticEchoCanceler.create(this.audioSessionId)?.apply {
+                        enabled = true
+                    }
+                }
 
             recorder?.startRecording()
 
@@ -378,12 +376,47 @@ class MainActivity : ComponentActivity() {
             while (isRecording) {
                 val read = recorder?.read(buffer, 0, buffer.size) ?: 0
                 if (read > 0) {
-                    if (isRecordMute){
+                    if (isRecordMute){ //tts 播报中
                         val silenceBuffer = ByteArray(BUFFER_SIZE)
                         outputStream?.write(silenceBuffer)
                     }else{
                         outputStream?.write(buffer, 0, read)
+//                        val samples = FloatArray(read) { buffer[it] / 32768.0f }
+//                        samplesBuffer.add(samples)
+//                        stream.acceptWaveform(samples, sampleRate = SAMPLE_RATE)
+//                        while (onlineRecognizer.isReady(stream)) {
+//                            onlineRecognizer.decode(stream)
+//                        }
+//                        val isEndpoint = onlineRecognizer.isEndpoint(stream)
+//                        var textToDisplay = lastText
+//
+//                        var text = onlineRecognizer.getResult(stream).text
+//                        if (text.isNotBlank()) {
+//                            textToDisplay = if (lastText.isBlank()) {
+//                                // textView.text = "${idx}: ${text}"
+//                                "${idx}: $text"
+//                            } else {
+//                                "${lastText}\n${idx}: $text"
+//                            }
+//                        }
+//
+//                        if (isEndpoint) {
+//                            onlineRecognizer.reset(stream)
+//
+//                            if (text.isNotBlank()) {
+//                                text = runSecondPass()
+//                                lastText = "${lastText}\n${idx}: $text"
+//                                idx += 1
+//                            } else {
+//                                samplesBuffer.clear()
+//                            }
+//                        }
+//
+//                        runOnUiThread {
+//                            textView.text = textToDisplay.lowercase()
+//                        }
                     }
+
                 }
             }
         } catch (e: IOException) {
@@ -443,6 +476,87 @@ class MainActivity : ComponentActivity() {
             e.printStackTrace()
         }
     }
+
+//    private fun initOnlineRecognizer() {
+//        // Please change getModelConfig() to add new models
+//        // See https://k2-fsa.github.io/sherpa/onnx/pretrained_models/index.html
+//        // for a list of available models
+//        val firstType = 9
+//        val firstRuleFsts: String?
+//        firstRuleFsts = null
+//        Log.i(TAG, "Select model type $firstType for the first pass")
+//        val config = OnlineRecognizerConfig(
+//            featConfig = getFeatureConfig(sampleRate = SAMPLE_RATE, featureDim = 80),
+//            modelConfig = getModelConfig(type = firstType)!!,
+//            endpointConfig = getEndpointConfig(),
+//            enableEndpoint = true,
+//        )
+//        if (firstRuleFsts != null) {
+//            config.ruleFsts = firstRuleFsts;
+//        }
+//
+//        onlineRecognizer = OnlineRecognizer(
+//            assetManager = application.assets,
+//            config = config,
+//        )
+//    }
+//
+//    private fun initOfflineRecognizer() {
+//        // Please change getOfflineModelConfig() to add new models
+//        // See https://k2-fsa.github.io/sherpa/onnx/pretrained_models/index.html
+//        // for a list of available models
+//        val secondType = 0
+//        var secondRuleFsts: String?
+//        secondRuleFsts = null
+//        Log.i(TAG, "Select model type $secondType for the second pass")
+//
+//        val config = OfflineRecognizerConfig(
+//            featConfig = getFeatureConfig(sampleRate = SAMPLE_RATE, featureDim = 80),
+//            modelConfig = getOfflineModelConfig(type = secondType)!!,
+//        )
+//
+//        if (secondRuleFsts != null) {
+//            config.ruleFsts = secondRuleFsts
+//        }
+//
+//        offlineRecognizer = OfflineRecognizer(
+//            assetManager = application.assets,
+//            config = config,
+//        )
+//    }
+//
+//    private fun runSecondPass(): String {
+//        var totalSamples = 0
+//        for (a in samplesBuffer) {
+//            totalSamples += a.size
+//        }
+//        var i = 0
+//
+//        val samples = FloatArray(totalSamples)
+//
+//        // todo(fangjun): Make it more efficient
+//        for (a in samplesBuffer) {
+//            for (s in a) {
+//                samples[i] = s
+//                i += 1
+//            }
+//        }
+//
+//
+//        val n = maxOf(0, samples.size - 8000)
+//
+//        samplesBuffer.clear()
+//        samplesBuffer.add(samples.sliceArray(n until samples.size))
+//
+//        val stream = offlineRecognizer.createStream()
+//        stream.acceptWaveform(samples.sliceArray(0..n), SAMPLE_RATE)
+//        offlineRecognizer.decode(stream)
+//        val result = offlineRecognizer.getResult(stream)
+//
+//        stream.release()
+//
+//        return result.text
+//    }
 
 //    private fun startStreaming() {
 //        try {

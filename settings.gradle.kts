@@ -22,3 +22,5 @@ dependencyResolutionManagement {
 rootProject.name = "S2SAndroidClient"
 include(":app")
 include(":deepfilter")
+include(":webrtc_apm")
+include(":asr")

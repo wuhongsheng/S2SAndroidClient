@@ -61,8 +61,13 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.datastore.preferences)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-    implementation(project(":deepfilter"))
+//    implementation(project(":deepfilter"))
+    implementation(project(":webrtc_apm"))
+    implementation(project(":asr"))
+    implementation(libs.androidx.preference.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
