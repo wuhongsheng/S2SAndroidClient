@@ -1,0 +1,1 @@
+asr/src/main/assets/sherpa-onnx-paraformer-zh-2023-09-14/model.int8.onnx filter=lfs diff=lfs merge=lfs -text
