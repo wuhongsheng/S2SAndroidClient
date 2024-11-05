@@ -1,5 +1,6 @@
 ## Speech2Speech Android AI Assistant
 
 
-![330311730437241_ pic](https://github.com/user-attachments/assets/54da1a7a-3423-4c04-b93f-c0bd1f7acbbb)
+<img width="353" alt="image" src="https://github.com/user-attachments/assets/901a23dc-e48f-4d84-8529-ea459e01398b">
+
 
