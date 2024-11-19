@@ -2,6 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application>
-        <activity android:name="com.rs.asr.LocalAsrActivity"/>
+<!--        <activity android:name="com.rs.asr.LocalAsrActivity"/>-->
     </application>
 </manifest>
