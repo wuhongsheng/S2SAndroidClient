@@ -62,13 +62,16 @@ fun ChatScreen(
     messages: MutableList<ChatMessage>,
     serverAddress: String,
     apiKey: String,
+    modelName:String,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
-    onSave: (url: String, key: String) -> Unit = { _, _,-> },
+    onSave: (url: String, key: String, model:String) -> Unit = { _, _,_,-> },
     ) {
     var showDialog by remember { mutableStateOf(false) }
     var serverAddress by remember { mutableStateOf(serverAddress) }
     var apiKey by remember { mutableStateOf(apiKey) }
+    var modelName by remember { mutableStateOf(modelName) }
+
 
 
     Column(modifier = Modifier
@@ -117,7 +120,15 @@ fun ChatScreen(
                             label = { Text("Enter Server apiKey") },
 //                                placeholder = { Text(serverAddress) }, 限制为单行
                             modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Unspecified) // 设置键盘类型为数字)
+                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text) // 设置键盘类型为数字)
+                        )
+                        OutlinedTextField(
+                            value = modelName,
+                            onValueChange = { modelName = it },
+                            label = { Text("Enter Model Name") },
+//                                placeholder = { Text(serverAddress) }, 限制为单行
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text) // 设置键盘类型为数字)
                         )
                     }
                 },
@@ -125,7 +136,7 @@ fun ChatScreen(
                     TextButton(
                         onClick = {
                             showDialog = false // 点击确定后关闭对话框
-                            onSave(serverAddress, apiKey)
+                            onSave(serverAddress, apiKey, modelName)
                         }
                     ) {
                         Text("确定")

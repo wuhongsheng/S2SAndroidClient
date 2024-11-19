@@ -62,11 +62,14 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.datastore.preferences)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+//    implementation("com.google.ai.edge.aicore:aicore:0.0.1-exp01")
+
 
 //    implementation(project(":deepfilter"))
-    implementation(project(":webrtc_apm"))
+//    implementation(project(":webrtc_apm"))
     implementation(project(":asr"))
     implementation(libs.androidx.preference.ktx)
+    implementation(libs.core.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

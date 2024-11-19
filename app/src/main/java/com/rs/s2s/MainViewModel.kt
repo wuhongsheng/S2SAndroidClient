@@ -26,6 +26,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val preferences = PreferenceManager.getDefaultSharedPreferences(application)
     fun getServerUrl() = preferences.getString(PREFERENCES_KEY_URL, URL) as String
     fun getApiKey() = preferences.getString(PREFERENCES_KEY_KEY, API_KEY) as String
+    fun getModelName() = preferences.getString(PREFERENCES_MODEL, MODEL) as String
 
     fun sendDeepSeekRequest(content: String, callback: Callback) {
 
@@ -40,7 +41,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             })
         }
         val json = JSONObject().apply {
-            put("model", "deepseek-chat")
+            put("model", MODEL)
             put("messages", messages)
             put("stream", false)
         }
@@ -60,10 +61,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         client.newCall(request).enqueue(callback)
     }
 
-    fun setSavedConfig(url: String,apikey: String) {
+    fun setSavedConfig(url: String,apikey: String, model:String) {
         preferences.edit {
             putString(PREFERENCES_KEY_URL, url)
             putString(PREFERENCES_KEY_KEY, apikey)
+            putString(PREFERENCES_MODEL, model)
+
         }
     }
 
@@ -71,8 +74,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
         private const val PREFERENCES_KEY_URL = "url"
         private const val PREFERENCES_KEY_KEY = "apikey"
-        const val URL = "https://api.deepseek.com/chat/completions"
+        private const val PREFERENCES_MODEL = "model"
+        const val URL = "https://api.deepseek.com/chat/completions" //https://api.openai.com/v1/chat/completions
         const val API_KEY = ""
+        const val MODEL = "deepseek-chat" //deepseek-chat
     }
 
 

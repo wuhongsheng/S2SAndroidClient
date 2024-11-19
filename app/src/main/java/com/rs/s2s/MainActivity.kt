@@ -53,7 +53,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.webrtc.audioprocessing.WebrtcAPMActivity
+//import com.webrtc.audioprocessing.WebrtcAPMActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -257,22 +257,22 @@ class MainActivity : ComponentActivity() {
 //                    )
 //                }
 
-                IconButton(
-                    onClick = {
-                        // 跳转到目标Activity
-                        val intent = Intent(context, WebrtcAPMActivity::class.java)
-                        startActivity(intent)
-                    },
-                    modifier = Modifier
-                        .align(Alignment.End)
-                ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_offline_bolt), // 使用设置图标
-                        tint = Color.Unspecified,
-                        contentDescription = "offline",
-                        modifier = Modifier.size(48.dp)
-                    )
-                }
+//                IconButton(
+//                    onClick = {
+//                        // 跳转到目标Activity
+//                        val intent = Intent(context, WebrtcAPMActivity::class.java)
+//                        startActivity(intent)
+//                    },
+//                    modifier = Modifier
+//                        .align(Alignment.End)
+//                ) {
+//                    Icon(
+//                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_offline_bolt), // 使用设置图标
+//                        tint = Color.Unspecified,
+//                        contentDescription = "offline",
+//                        modifier = Modifier.size(48.dp)
+//                    )
+//                }
             }
 
 

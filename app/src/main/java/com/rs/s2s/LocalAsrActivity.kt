@@ -47,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
+import androidx.test.core.app.ApplicationProvider
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
 import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig
 import com.k2fsa.sherpa.onnx.OnlineRecognizer
@@ -120,12 +121,13 @@ class LocalAsrActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         }
     }
 
+    @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
     fun ChatScreen(){
         var chatMessages by remember {mutableStateOf(arrayListOf<ChatMessage>())}
         var isRecording by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
-        val context = LocalContext.current
+        var context = LocalContext.current
         val launcher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
             onResult = { isGranted ->
@@ -144,12 +146,29 @@ class LocalAsrActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         )
         var recordJob: Job? by remember { mutableStateOf(null) }
 //        chatMessages.add(ChatMessage("测试测试测试车的精神",false))
+//        val generationConfig = generationConfig {
+//            context = ApplicationProvider.getApplicationContext() // required
+//            temperature = 0.2f
+//            topK = 16
+//            maxOutputTokens = 256
+//        }
+//        val generativeModel = GenerativeModel(
+//            generationConfig = generationConfig,
+//        )
+//
+//        scope.launch {
+//            // Single string input prompt
+//            val input = "你好"
+//            val response = generativeModel.generateContent(input)
+//            print(response.text)
+//        }
 
         ChatScreen(
             isRecording = isRecording,
             messages = chatMessages,
             serverAddress = viewModel.getServerUrl(),
             apiKey = viewModel.getApiKey(),
+            modelName = viewModel.getModelName(),
             onStartRecording = {
                 // 开始录音逻辑
                 checkAndRequestPermission(context, launcher) {
@@ -214,10 +233,10 @@ class LocalAsrActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                 }
 
             },
-            onSave = { url, apikey ->
-                Log.i(TAG, "onSave url: $url apikey: $apikey")
+            onSave = { url, apikey,modelName ->
+                Log.i(TAG, "onSave url: $url apikey: $apikey modelName:$modelName")
                 scope.launch {
-                    viewModel.setSavedConfig(url,apikey)
+                    viewModel.setSavedConfig(url,apikey,modelName)
                 }
             }
         )
